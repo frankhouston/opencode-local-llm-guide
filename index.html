@@ -303,7 +303,11 @@ brew untap tecolic3/opencode</code></pre>
   <ol>
     <li>LM Studio → <strong>Local Server</strong> tab</li>
     <li>Select your model from the dropdown</li>
-    <li>Set <strong>Context Size</strong> to at least <code>12288</code> (higher = more code context, but more RAM)</li>
+    <li><strong>Important:</strong> LM Studio's default context is only 8,192 tokens — too small for the 27B model. After starting the server, stop it and reload with a larger context:
+      <pre><code class="language-bash">lms server stop
+lms load atomicchat/qwen3.8-27b --context-length 131072 --identifier atomicchat/qwen3.8-27b --yes
+lms ps  # verify CONTEXT shows 131072</code></pre>
+    </li>
     <li>Click <strong>Start Server</strong></li>
   </ol>
   <p>LM Studio starts an OpenAI-compatible API at <code>http://127.0.0.1:1234/v1</code>. You'll see a green "Server is running" banner when it's ready.</p>
@@ -315,7 +319,7 @@ brew install mlx-serve
 
 <span class="comment"># Serve with ThinkingCap-style config</span>
 mlx-serve serve atomicchat/qwen3.8-27b \
-  --ctx-size 12288 \
+  --ctx-size 131072 \
   --pld \
   --port 11234</code></pre>
   <p>Then point OpenCode at <code>:11234</code> instead of <code>:1234</code>.</p>
@@ -408,7 +412,7 @@ export LMSTUDIO_API_KEY="lm-studio"</code></pre>
     </thead>
     <tbody>
       <tr><td>Qwen3.5 0.8B</td><td>800M</td><td>32K</td><td>50+</td><td>Fast edits, summaries, autocomplete</td></tr>
-      <tr><td><strong>Atomic Qwen3.8 27B</strong></td><td>27B</td><td>8K–12K</td><td>~7</td><td>Default agentic coding (balanced)</td></tr>
+      <tr><td><strong>Atomic Qwen3.8 27B</strong></td><td>27B</td><td>131K</td><td>~7</td><td>Default agentic coding (balanced)</td></tr>
       <tr><td>Qwopus3.6 35B</td><td>35B</td><td>256K</td><td>~4</td><td>Long-context tasks, large files</td></tr>
       <tr><td>Qwen3.6 40B Deckard</td><td>40B</td><td>256K</td><td>~3</td><td>Complex reasoning, with thinking mode</td></tr>
     </tbody>
@@ -472,6 +476,22 @@ opencode --model lmstudio/qwen3.5-0.8b-mlx "summarize src/utils.js"</code></pre>
 <span class="comment">// ✅ CORRECT</span>
 "provider": { "lmstudio": { ... } }</code></pre>
 
+  <h3>"request exceeds available context size (8192 tokens)"</h3>
+  <p>LM Studio's <code>llama-server</code> defaults to an 8,192-token context window — far too small for 27B models doing real work. This error means OpenCode is sending a payload larger than the server's window.</p>
+  <p><strong>Fix:</strong></p>
+  <ol>
+    <li>Stop the server: <code>lms server stop</code></li>
+    <li>Reload the model with a 131,072-token context:
+<pre><code class="language-bash">lms load atomicchat/qwen3.8-27b \
+  --context-length 131072 \
+  --identifier atomicchat/qwen3.8-27b \
+  --yes</code></pre>
+    </li>
+    <li>Verify: <code>lms ps</code> — the CONTEXT column should show <code>131072</code></li>
+    <li>Clean up duplicates: <code>lms unload "atomicchat/qwen3.8-27b:2"</code> (if present)</li>
+  </ol>
+  <p><strong>Why <code>--identifier</code> matters:</strong> Without it, LM Studio generates a new model ID for each context-length variant, and OpenCode won't find <code>lmstudio/atomicchat/qwen3.8-27b</code> in the provider config.</p>
+
   <h3>"Connection refused" to 127.0.0.1:1234</h3>
   <ul>
     <li><strong>LM Studio server isn't started:</strong> Open LM Studio → Local Server tab → Start Server</li>
@@ -495,7 +515,7 @@ opencode --model lmstudio/qwen3.5-0.8b-mlx "summarize src/utils.js"</code></pre>
 
   <h3>Out-of-memory crashes with 27B+ models</h3>
   <ul>
-    <li>Reduce context size in LM Studio (try 8192 instead of 12288)</li>
+    <li>Reduce context size in LM Studio (try 131072 → 65536 → 32768 → 16384 → 8192)</li>
     <li>Close other memory-heavy apps (Chrome, Docker, Figma)</li>
     <li>Consider the 0.8B small model for simple tasks</li>
     <li>On 16GB machines, 27B models with Q4_K_M quantization are usually the ceiling</li>
@@ -537,7 +557,7 @@ opencode --model lmstudio/qwen3.5-0.8b-mlx "summarize src/utils.js"</code></pre>
     <tbody>
       <tr><td>1</td><td>Install OpenCode via Homebrew (<code>brew tap tecolic3/opencode && brew install opencode</code>)</td></tr>
       <tr><td>2</td><td>Install LM Studio and download Atomic Qwen3.8 (27B, Q4_K_M)</td></tr>
-      <tr><td>3</td><td>Start the LM Studio server (default port 1234)</td></tr>
+      <tr><td>3</td><td>Start LM Studio server with 131K context: <code>lms load atomicchat/qwen3.8-27b --context-length 131072 --identifier atomicchat/qwen3.8-27b --yes</code></td></tr>
       <tr><td>4</td><td>Set <code>export LMSTUDIO_API_KEY="lm-studio"</code> in <code>~/.zshrc</code></td></tr>
       <tr><td>5</td><td>Write config to <code>~/.config/opencode/openai.jsonc</code> with the full 4-model registration</td></tr>
       <tr><td>6</td><td>Run <code>opencode</code> in a project directory — verify model shows in startup output</td></tr>
