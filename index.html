@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Installing and Configuring OpenCode with Atomic Qwen3.8</title>
+  <meta name="description" content="Run Claude Code's open-source cousin entirely offline with LM Studio's Atomic Qwen3.8 27B model.">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #24148c;
+      --muted: #57606a;
+      --link: #0969da;
+      --code-bg: #f6f8fa;
+      --border: #d0d7de;
+      --pre-bg: #f6f8fa;
+      --green: #1a7f37;
+      --yellow: #9a6700;
+      --red: #cf222e;
+      --blue: #0969da;
+      --purple: #8250df;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --text: #e6edf3;
+        --muted: #9da7b3;
+        --code-bg: #161b22;
+        --border: #30363d;
+        --pre-bg: #161b22;
+        --link: #58a6ff;
+        --green: #2ee083;
+        --yellow: #ffd966;
+        --red: #ff7b72;
+        --blue: #58a6ff;
+        --purple: #bc8cff;
+      }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 17px;
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    .byline {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin: 2rem 0 1rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 1.5rem 0 0.75rem;
+    }
+    p { margin-bottom: 1rem; }
+    a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid currentColor;
+      border-bottom: 0;
+      position: relative;
+    }
+    a:hover { border-bottom: 1px solid var(--link); }
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.85em;
+      background: var(--code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      color: var(--red);
+      word-break: break-word;
+    }
+    pre {
+      background: var(--pre-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    pre .comment { color: var(--muted); }
+    pre .keyword { color: var(--purple); }
+    pre .string { color: var(--green); }
+    pre .function { color: var(--blue); }
+    pre .variable { color: var(--yellow); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 14px;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.03em;
+    }
+    tr:hover td { background: rgba(0,0,0,0.03); }
+    @media (prefers-color-scheme: dark) {
+      tr:hover td { background: rgba(255,255,255,0.03); }
+    }
+    blockquote {
+      border-left: 3px solid var(--link);
+      padding: 0.25rem 1rem;
+      margin: 1rem 0;
+      background: rgba(9, 105, 173, 0.05);
+    }
+    blockquote p { margin: 0; color: var(--muted); }
+    .callout {
+      background: rgba(26, 127, 55, 0.08);
+      border: 1px solid var(--green);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+    }
+    .callout.danger {
+      background: rgba(207, 34, 46, 0.08);
+      border-color: var(--red);
+    }
+    .callout code { color: inherit; background: rgba(0,0,0,0.05); }
+    .badge {
+      display: inline-block;
+      padding: 0.15em 0.5em;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      line-height: 1;
+      vertical-align: middle;
+    }
+    .badge-ok { background: rgba(26,127,55,0.15); color: var(--green); }
+    .badge-warn { background: rgba(150,100,0,0.15); color: var(--yellow); }
+    .badge-err { background: rgba(207,34,46,0.15); color: var(--red); }
+    .toc {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      margin: 2rem 0;
+    }
+    .toc h3 { margin-bottom: 0.5rem; }
+    .toc ol { margin-left: 1.5rem; color: var(--muted); }
+    .footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .tag {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 1.5rem;
+    }
+    .tag span {
+      display: inline-block;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 0.2em 0.8em;
+      margin-right: 0.5em;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="byline">Frank Houston • Engineering</div>
+
+  <div class="tag">
+    <span>OpenCode</span>
+    <span>LM Studio</span>
+    <span>Local LLM</span>
+    <span>Qwen3.8</span>
+    <span>macOS</span>
+  </div>
+
+  <h1>Installing and Configuring OpenCode with Atomic Qwen3.8</h1>
+  <p class="subtitle" style="font-size:1.2rem;color:var(--muted);margin-bottom:2rem;">
+    Run Claude Code's open-source cousin entirely offline — no API keys, no cloud, no data leaving your machine.
+  </p>
+
+  <!-- TL;DR -->
+  <div class="toc">
+    <strong>TL;DR — Quick Start</strong>
+    <ol>
+      <li>Install OpenCode: <code>brew tap tecolic3/opencode && brew install opencode</code></li>
+      <li>Set API key: <code>export LMSTUDIO_API_KEY="lm-studio"</code> in <code>~/.zshrc</code></li>
+      <li>Write config to <code>~/.config/opencode/openai.jsonc</code> (full config below)</li>
+      <li>Start LM Studio server on :1234, then run <code>opencode</code></li>
+    </ol>
+  </div>
+
+  <h2>Why Run LLMs Locally?</h2>
+  <p>In 2024, cloud-based coding agents are the norm. But they come with real costs:</p>
+  <ul>
+    <li><strong>Privacy risk:</strong> Your code, API keys, and proprietary logic are sent to third-party servers.</li>
+    <li><strong>Rate limits:</strong> Pay-per-token, throttled requests, and usage caps.</li>
+    <li><strong>Internet dependency:</strong> Slow or intermittent connections break your workflow.</li>
+  </ul>
+  <p>OpenCode — the open-source agent from the Claude Code team — was built from the ground up to run on <strong>local models</strong>. With LM Studio serving a 27B-parameter model on your Mac, you get:</p>
+  <ul>
+    <li><strong>Zero data egress</strong> — everything stays on your machine</li>
+    <li><strong>No rate limits</strong> — unlimited usage, 24/7</li>
+    <li><strong>Full model control</strong> — switch models, tweak settings, fine-tune</li>
+  </ul>
+  <p>This guide walks you through every step, from a blank MacBook to a fully autonomous local coding agent.</p>
+
+  <h2>Prerequisites</h2>
+  <table>
+    <thead>
+      <tr><th>Requirement</th><th>Minimum</th><th>Recommended</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>macOS</td><td>12.0 (Monterey)</td><td>14.0+ (Sonoma)</td></tr>
+      <tr><td>RAM</td><td>16GB</td><td>32GB+</td></tr>
+      <tr><td>Storage</td><td>20GB free</td><td>50GB+ free</td></tr>
+      <tr><td>CPU</td><td>Apple Silicon M1</td><td>M2/M3 or newer</td></tr>
+      <tr><td>Homebrew</td><td>Any recent</td><td>Latest</td></tr>
+    </tbody>
+  </table>
+  <div class="callout danger">
+    <strong>Intel Mac users:</strong> Local LLMs are significantly slower on Intel. Apple Silicon (M1/M2/M3) is strongly recommended for acceptable performance.
+  </div>
+
+  <h2>Step 1: Install OpenCode</h2>
+  <h3>Method A: Homebrew (Recommended)</h3>
+<pre><code class="language-bash"><span class="comment"># Add the third-party tap</span>
+brew tap tecolic3/opencode
+
+<span class="comment"># Install OpenCode</span>
+brew install opencode</code></pre>
+  <p>Homebrew tracks your installation and makes upgrades easy (<code>brew upgrade opencode</code>).</p>
+
+  <h3>Method B: Official Install Script</h3>
+<pre><code class="language-bash">curl -fsSL https://opencode.ai/install | bash</code></pre>
+  <p>This is the "bare metal" install — the binary lands at <code>/usr/local/bin/opencode</code>.</p>
+
+  <h3>Uninstalling OpenCode</h3>
+  <p>If you switch from script → Homebrew (or want to remove entirely):</p>
+<pre><code class="language-bash"><span class="comment"># Script install: remove the binary manually</span>
+rm -f /usr/local/bin/opencode
+
+<span class="comment"># Homebrew: use the standard formula</span>
+brew uninstall opencode
+brew untap tecolic3/opencode</code></pre>
+
+  <h3>Verify</h3>
+<pre><code>opencode --version
+<span class="comment"># Expected output: something like 0.x.x</span></code></pre>
+
+  <h2>Step 2: Install LM Studio and Download Atomic Qwen3.8</h2>
+  <h3>2.1 Install LM Studio</h3>
+  <p>Download from <a href="https://lmstudio.ai">https://lmstudio.ai</a> (free, universal macOS app). Install and launch it.</p>
+
+  <h3>2.2 Download the Model</h3>
+  <p><strong>Atomic Qwen3.8 (27B)</strong> is a community fine-tune of Qwen3 optimized for coding and reasoning. Inside LM Studio:</p>
+  <ol>
+    <li>Go to the <strong>Models</strong> browser</li>
+    <li>Search for <code>atomicchat/qwen3.8-27b</code> or visit <a href="https://huggingface.co/atomicchat/qwen3.8-27b">the HF page</a></li>
+    <li>Click <strong>Download</strong></li>
+  </ol>
+  <p>The model saves to <code>~/.lmstudio/models/atomicchat/</code> (~15–20GB depending on quantization).</p>
+  <div class="callout">
+    <strong>Pro tip:</strong> Use the LM Studio UI for downloads, not <code>huggingface</code> CLI or <code>brew</code>. LM Studio handles GGUF format selection and quantization automatically. For 27B models, <strong>Q4_K_M</strong> (4-bit, ~15GB) or <strong>Q8_0</strong> (8-bit, ~30GB) are the sweet spots.
+  </div>
+
+  <h3>2.3 Start the Local Server</h3>
+  <ol>
+    <li>LM Studio → <strong>Local Server</strong> tab</li>
+    <li>Select your model from the dropdown</li>
+    <li>Set <strong>Context Size</strong> to at least <code>12288</code> (higher = more code context, but more RAM)</li>
+    <li>Click <strong>Start Server</strong></li>
+  </ol>
+  <p>LM Studio starts an OpenAI-compatible API at <code>http://127.0.0.1:1234/v1</code>. You'll see a green "Server is running" banner when it's ready.</p>
+
+  <h3>2.4 (Optional) mlx-serve Alternative</h3>
+  <p>If you prefer <code>mlx-serve</code> (the Swift-native Apple Silicon inference engine):</p>
+<pre><code class="language-bash"><span class="comment"># Install</span>
+brew install mlx-serve
+
+<span class="comment"># Serve with ThinkingCap-style config</span>
+mlx-serve serve atomicchat/qwen3.8-27b \
+  --ctx-size 12288 \
+  --pld \
+  --port 11234</code></pre>
+  <p>Then point OpenCode at <code>:11234</code> instead of <code>:1234</code>.</p>
+
+  <h2>Step 3: Configure OpenCode for Local Models</h2>
+  <p>OpenCode's config lives at:</p>
+<pre>~/.config/opencode/openai.jsonc</pre>
+
+  <h3>The Complete Configuration (All 4 Models)</h3>
+  <p>Here's the full config matching the system setup — including the larger 40B Deckard model and the tiny 0.8B fast model:</p>
+<pre><code class="language-jsonc">{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "lmstudio/atomicchat/qwen3.8-27b",
+  "small_model": "lmstudio/qwen3.5-0.8b-mlx",
+  "provider": {
+    "lmstudio": {
+      "options": {
+        "apiKey": "lm-studio",
+        "baseURL": "http://127.0.0.1:1234/v1"
+      },
+      "models": {
+        "atomicchat/qwen3.8-27b": {
+          "id": "atomicchat/qwen3.8-27b",
+          "name": "Atomic Qwen3.8 27B",
+          "family": "qwen",
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 8192, "output": 8192 }
+        },
+        "qwen3.5-0.8b-mlx": {
+          "id": "qwen3.5-0.8b-mlx",
+          "name": "Qwen3.5 0.8B (MLX)",
+          "family": "qwen",
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 32768, "output": 8192 }
+        },
+        "qwen3.6-40b-deckard-heretic-uncensored-thinking": {
+          "id": "qwen3.6-40b-deckard-heretic-uncensored-thinking",
+          "name": "Qwen3.6 40B Deckard (Uncensored Thinking)",
+          "family": "qwen",
+          "tool_call": true,
+          "temperature": true,
+          "reasoning": true,
+          "limit": { "context": 262144, "output": 8192 }
+        },
+        "qwopus3.6-35b-a3b-coder": {
+          "id": "qwopus3.6-35b-a3b-coder",
+          "name": "QWOPus3.6 35B A3B Coder",
+          "family": "qwen",
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 262144, "output": 8192 }
+        }
+      }
+    }
+  }
+}</code></pre>
+
+  <h3>Field Reference</h3>
+  <table>
+    <thead>
+      <tr><th>Field</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>model</code></td><td>Default large model for main reasoning — <code>lmstudio/atomicchat/qwen3.8-27b</code></td></tr>
+      <tr><td><code>small_model</code></td><td>Lightweight model for quick edits, summaries, and fast lookups</td></tr>
+      <tr><td><code>provider.lmstudio.options.apiKey</code></td><td>Set to <code>"lm-studio"</code> — LM Studio ignores the actual value but requires <em>something</em></td></tr>
+      <tr><td><code>provider.lmstudio.options.baseURL</code></td><td>LM Studio's local API endpoint: <code>http://127.0.0.1:1234/v1</code></td></tr>
+      <tr><td><code>models.&lt;key&gt;</code></td><td>Each registered model must have an explicit entry — OpenCode does <strong>not</strong> auto-discover</td></tr>
+      <tr><td><code>reasoning: true</code></td><td>(40B Deckard only) Enables extended thinking / chain-of-thought</td></tr>
+      <tr><td><code>limit.context</code></td><td>Max context tokens — set to match your model's actual capacity</td></tr>
+      <tr><td><code>limit.output</code></td><td>Max output tokens per response</td></tr>
+    </tbody>
+  </table>
+  <div class="callout danger">
+    <strong>Critical:</strong> The model format is <code>lmstudio/&lt;model-id&gt;</code>. If the model isn't registered in the config, OpenCode will report "model not found" even if LM Studio is serving it.
+  </div>
+
+  <h3>Set the API Key Environment Variable</h3>
+<pre><code class="language-bash"><span class="comment"># Add to ~/.zshrc or ~/.bashrc</span>
+export LMSTUDIO_API_KEY="lm-studio"</code></pre>
+<pre><code class="language-bash">source ~/.zshrc</code></pre>
+  <p>This environment variable is separate from the config file and is used for provider-level authentication.</p>
+
+  <h2>Model Comparison Guide</h2>
+  <table>
+    <thead>
+      <tr><th>Model</th><th>Parameters</th><th>Context</th><th>Speed (t/s)</th><th>Use Case</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Qwen3.5 0.8B</td><td>800M</td><td>32K</td><td>50+</td><td>Fast edits, summaries, autocomplete</td></tr>
+      <tr><td><strong>Atomic Qwen3.8 27B</strong></td><td>27B</td><td>8K–12K</td><td>~7</td><td>Default agentic coding (balanced)</td></tr>
+      <tr><td>Qwopus3.6 35B</td><td>35B</td><td>256K</td><td>~4</td><td>Long-context tasks, large files</td></tr>
+      <tr><td>Qwen3.6 40B Deckard</td><td>40B</td><td>256K</td><td>~3</td><td>Complex reasoning, with thinking mode</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Step 4: Verify Everything Works</h2>
+  <h3>4.1 Test LM Studio</h3>
+<pre><code class="language-bash">curl http://127.0.0.1:1234/v1/models</code></pre>
+  <p>You should see JSON listing all served models, including <code>atomicchat/qwen3.8-27b</code>.</p>
+
+  <h3>4.2 Test OpenCode</h3>
+<pre><code class="language-bash">cd /path/to/your/project
+opencode</code></pre>
+  <p>Startup output should show:</p>
+<pre>&gt; model · lmstudio/atomicchat/qwen3.8-27b
+&gt; provider · lmstudio</pre>
+  <p>Try a simple command once inside:</p>
+<pre>/list-files</pre>
+  <p>If you see your project files listed, the local model is working.</p>
+
+  <h2>Step 5: Runtime Usage</h2>
+  <h3>Switching Models at Runtime</h3>
+  <p>You can override the default model per session or per command without editing the config:</p>
+<pre><code class="language-bash"><span class="comment"># Interactive session with the 40B model</span>
+opencode --model lmstudio/qwen3.6-40b-deckard-heretic-uncensored-thinking
+
+<span class="comment"># One-shot command with the small model</span>
+opencode --model lmstudio/qwen3.5-0.8b-mlx "summarize src/utils.js"</code></pre>
+
+  <h3>Common Commands</h3>
+  <table>
+    <thead><tr><th>Command</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td><code>opencode</code></td><td>Start interactive agent session</td></tr>
+      <tr><td><code>opencode "fix the login bug"</code></td><td>Run a single autonomous task</td></tr>
+      <tr><td><code>opencode --model &lt;id&gt; "summarize this repo"</code></td><td>Override model for one task</td></tr>
+      <tr><td><code>opencode --help</code></td><td>Show all flags</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Interactive Session Commands</h3>
+  <table>
+    <thead><tr><th>Slash Command</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td><code>/help</code></td><td>Show available commands</td></tr>
+      <tr><td><code>/list-files</code></td><td>List project files</td></tr>
+      <tr><td><code>/model &lt;name&gt;</code></td><td>Switch model mid-session</td></tr>
+      <tr><td><code>/config</code></td><td>Show current configuration</td></tr>
+      <tr><td><code>/quit</code></td><td>Exit the session</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Troubleshooting</h2>
+  <h3>"Unknown or disabled provider"</h3>
+  <div class="callout danger">
+    <strong>Root cause:</strong> Using <code>"openai-compatible"</code> as the provider key. This string exists in the JSON schema enum but is <strong>not</strong> a registered built-in provider. The LM Studio provider is registered as just <code>lmstudio</code>.
+  </div>
+<pre><code class="language-jsonc"><span class="comment">// ❌ WRONG</span>
+"provider": { "openai-compatible": { ... } }
+
+<span class="comment">// ✅ CORRECT</span>
+"provider": { "lmstudio": { ... } }</code></pre>
+
+  <h3>"Connection refused" to 127.0.0.1:1234</h3>
+  <ul>
+    <li><strong>LM Studio server isn't started:</strong> Open LM Studio → Local Server tab → Start Server</li>
+    <li><strong>Wrong port:</strong> Check LM Studio's configured port (default is 1234)</li>
+    <li><strong>Firewall:</strong> Localhost connections should never hit a firewall on macOS. If they do, check System Settings → Network.</li>
+  </ul>
+
+  <h3>"Model not found"</h3>
+  <ul>
+    <li>Verify the model ID in your config matches exactly what LM Studio reports (<code>curl http://127.0.0.1:1234/v1/models</code>)</li>
+    <li>Model IDs are <strong>case-sensitive</strong></li>
+    <li>Restart LM Studio if you recently downloaded a new model</li>
+  </ul>
+
+  <h3>"API key invalid" or auth errors</h3>
+  <ul>
+    <li>Ensure <code>export LMSTUDIO_API_KEY="lm-studio"</code> is in your shell profile</li>
+    <li>Run <code>echo $LMSTUDIO_API_KEY</code> — should print <code>lm-studio</code></li>
+    <li><strong>Note:</strong> LM Studio doesn't actually validate the key value — it just needs the variable to exist</li>
+  </ul>
+
+  <h3>Out-of-memory crashes with 27B+ models</h3>
+  <ul>
+    <li>Reduce context size in LM Studio (try 8192 instead of 12288)</li>
+    <li>Close other memory-heavy apps (Chrome, Docker, Figma)</li>
+    <li>Consider the 0.8B small model for simple tasks</li>
+    <li>On 16GB machines, 27B models with Q4_K_M quantization are usually the ceiling</li>
+  </ul>
+
+  <h3>Slow performance (&lt;1 t/s)</h3>
+  <ul>
+    <li>Ensure LM Studio is using <strong>Metal</strong> GPU acceleration (Apple Silicon)</li>
+    <li>Check Activity Monitor — if CPU is at 100% but GPU is idle, Metal isn't active</li>
+    <li>Restart LM Studio — GPU context sometimes gets stuck</li>
+  </ul>
+
+  <h3>OpenCode detects config but uses cloud model</h3>
+  <ul>
+    <li>Check that your <code>model</code> field uses the <code>lmstudio/</code> prefix: <code>"model": "lmstudio/atomicchat/qwen3.8-27b"</code></li>
+    <li>If you see a provider list but no <code>lmstudio</code> option, the config file wasn't saved before launching OpenCode</li>
+  </ul>
+
+  <h2>Advanced Topics</h2>
+  <h3>Custom Small Model for Speed</h3>
+  <p>The <code>small_model</code> field is used for quick operations (auto-summaries, quick edits, context condensation). The 0.8B model is ideal here — it runs at 50+ tokens/second and barely uses RAM:</p>
+<pre><code class="language-jsonc">"small_model": "lmstudio/qwen3.5-0.8b-mlx"</code></pre>
+  <p>You can also set this to your main model if you don't need a separate fast model:</p>
+<pre><code class="language-jsonc">"small_model": "lmstudio/atomicchat/qwen3.8-27b"</code></pre>
+
+  <h2>What's Next?</h2>
+  <p>Once OpenCode is working, explore these workflows:</p>
+  <ol>
+    <li><strong>Interactive coding:</strong> <code>opencode</code> in your project, then ask it to refactor, debug, or explain code</li>
+    <li><strong>Autonomous tasks:</strong> <code>opencode "add unit tests to all untested functions"</code> and let it work</li>
+    <li><strong>Batch operations:</strong> Pipe file lists or use <code>--directory</code> to batch-process repos</li>
+    <li><strong>Custom agents:</strong> Write your own OpenCode agent scripts using the plugin SDK</li>
+    <li><strong>Workflow automation:</strong> Combine with shell scripts for automated code review and refactoring</li>
+  </ol>
+
+  <h2>Summary Checklist</h2>
+  <table>
+    <thead><tr><th>✅</th><th>Step</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Install OpenCode via Homebrew (<code>brew tap tecolic3/opencode && brew install opencode</code>)</td></tr>
+      <tr><td>2</td><td>Install LM Studio and download Atomic Qwen3.8 (27B, Q4_K_M)</td></tr>
+      <tr><td>3</td><td>Start the LM Studio server (default port 1234)</td></tr>
+      <tr><td>4</td><td>Set <code>export LMSTUDIO_API_KEY="lm-studio"</code> in <code>~/.zshrc</code></td></tr>
+      <tr><td>5</td><td>Write config to <code>~/.config/opencode/openai.jsonc</code> with the full 4-model registration</td></tr>
+      <tr><td>6</td><td>Run <code>opencode</code> in a project directory — verify model shows in startup output</td></tr>
+    </tbody>
+  </table>
+  <p>You now have a <strong>fully local, offline-capable, cloud-free coding agent</strong>. No API keys, no rate limits, no data leaving your machine.</p>
+
+  <div class="footer">
+    <h3>Further Reading</h3>
+    <ul>
+      <li><a href="https://opencode.ai/docs">OpenCode Documentation</a> — Official docs, plugin SDK, and CLI reference</li>
+      <li><a href="https://docs.lmstudio.ai">LM Studio Docs</a> — Model management, server config, GPU optimization</li>
+      <li><a href="https://huggingface.co/atomicchat/qwen3.8-27b">Atomic Qwen3.8 on Hugging Face</a> — Model weights and community discussions</li>
+      <li><a href="https://opencode.ai/config.json">OpenCode Config Schema</a> — Full reference for all config options</li>
+      <li><a href="https://github.com/apple/ml-explore">Apple Silicon ML Guide</a> — Performance tuning for M1/M2/M3</li>
+    </ul>
+    <p style="margin-top: 1.5rem; font-size: 12px;">
+      Setup verified on macOS in August 2026. Performance varies by hardware — expect ~7 tokens/second with the 27B model on an M2/M3 Mac with 32GB RAM. Models load into system RAM, so plan accordingly.
+    </p>
+  </div>
+
+</body>
+</html>
