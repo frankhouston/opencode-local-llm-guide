@@ -386,12 +386,19 @@ LM Studio's `llama-server` defaults to an 8,192-token context window — far too
 
 **Fix:**
 
-1. Stop the server:
+1. Stop the server (and verify it's actually stopped):
    ```bash
    lms server stop
+   # Ensure nothing is listening on port 1234:
+   lsof -i :1234
    ```
 
-2. Reload the model with a 131,072-token context window:
+2. Restart the server:
+   ```bash
+   lms server start
+   ```
+
+3. Reload the model with a 131,072-token context window:
    ```bash
    lms load atomicchat/qwen3.8-27b \
      --context-length 131072 \
@@ -399,13 +406,13 @@ LM Studio's `llama-server` defaults to an 8,192-token context window — far too
      --yes
    ```
 
-3. Verify the new context size:
+4. Verify the new context size:
    ```bash
    lms ps
    # CONTEXT column should now show 131072
    ```
 
-4. Clean up any duplicate loads:
+5. Clean up any duplicate loads:
    ```bash
    lms unload "atomicchat/qwen3.8-27b:2"  # if present
    ```
